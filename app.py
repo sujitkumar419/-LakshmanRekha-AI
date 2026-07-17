@@ -2,22 +2,20 @@ import streamlit as st
 import numpy as np
 import joblib
 
-# Page configuration framework initialization
+# Page parameters configuration for responsive UI layout
 st.set_page_config(
-    page_title="LakshmanRekha AI",
-    page_icon="🛡️",
+    page_title="LakshmanRekha AI", 
+    page_icon="🛡️", 
     layout="centered"
 )
 
-
-# Load production serialization artifacts
+# Application core files setup
 @st.cache_resource
 def load_production_artifacts():
     model = joblib.load('lakshmanrekha_svr_model.pkl')
     scaler_x = joblib.load('scaler_x.pkl')
     scaler_y = joblib.load('scaler_y.pkl')
     return model, scaler_x, scaler_y
-
 
 try:
     model, scaler_x, scaler_y = load_production_artifacts()
@@ -26,12 +24,11 @@ except FileNotFoundError:
     st.stop()
 
 # --- DUAL LANGUAGE DICTIONARY LOOKUP ---
-# Custom dictionary mapping for seamless UI language toggle
 lang_dict = {
     "English": {
         "title": "🛡️ LakshmanRekha AI",
         "subtitle": "SVR-Powered Human Tolerance & Frustration Tracker",
-        "desc": "This predictive framework utilizes Support Vector Regression to model behavioral thresholds. It implements an $\epsilon$-insensitive tube boundary to absorb baseline stress deviations while accurately mapping extreme variance outliers.",
+        "desc": "This predictive framework utilizes Support Vector Regression to model behavioral thresholds. It implements an ε-insensitive tube boundary to absorb baseline stress deviations while accurately mapping extreme variance outliers.",
         "lbl_hours": "Daily Working Hours",
         "lbl_salary": "Salary Satisfaction Level (1-Low, 5-High)",
         "lbl_manager": "Manager Relationship Index (1-Best, 5-Worst)",
@@ -39,14 +36,14 @@ lang_dict = {
         "lbl_promo": "Years Since Last Promotion",
         "btn_evaluate": "Evaluate Behavior Metric Pipeline",
         "lbl_metric": "Calculated Cumulative Frustration Index",
-        "msg_green": "🟢 **Stable State:** Data vector resides safely inside the $\epsilon$-tube boundaries. Natural variance is fully absorbed.",
+        "msg_green": "🟢 **Stable State:** Data vector resides safely inside the ε-tube boundaries. Natural variance is fully absorbed.",
         "msg_yellow": "🟡 **Warning State:** Approaching critical tolerance thresholds. System friction is escalating. Intervention recommended.",
         "msg_red": "🔴 **Breach Alert:** Boundary violated! Subject functions as a critical Support Vector outlier. High attrition probability."
     },
     "Hindi / Hinglish": {
         "title": "🛡️ लक्ष्मणरेखा AI (LakshmanRekha AI)",
         "subtitle": "SVR-पावर्ड ह्यूमन टॉलरेंस और फ्रस्ट्रेशन ट्रैकर",
-        "desc": "यह AI मॉड्यूल Support Vector Regression (SVR) का उपयोग करके इंसान के सब्र की सीमा को मापता है। यह एक 'सुरक्षा घेरा' ($\epsilon$-tube) बनाता है जो रोज़मर्रा के छोटे-मोटे तनाव को माफ कर देता है, लेकिन लिमिट टूटने पर आउटलियर्स (Support Vectors) को तुरंत पकड़ लेता है।",
+        "desc": "यह AI मॉड्यूल Support Vector Regression (SVR) का उपयोग करके इंसान के सब्र की सीमा को मापता है। यह एक 'सुरक्षा घेरा' (ε-tube) बनाता है जो रोज़मर्रा के छोटे-मोटे तनाव को माफ कर देता है, लेकिन लिमिट टूटने पर आउटलियर्स (Support Vectors) को तुरंत पकड़ लेता है।",
         "lbl_hours": "रोज़ाना काम के घंटे (Daily Working Hours)",
         "lbl_salary": "सैलरी से संतुष्टि (1-कम, 5-सबसे ज़्यादा)",
         "lbl_manager": "मैनेजर के साथ रिश्ता (1-सबसे अच्छा, 5-खराब)",
@@ -60,17 +57,14 @@ lang_dict = {
     }
 }
 
-# Language Configuration Toggle Selection
 selected_lang = st.selectbox("🌐 Choose UI Language / भाषा चुनें", ["English", "Hindi / Hinglish"])
 text = lang_dict[selected_lang]
 
-# Render Dynamic UI elements based on selection
 st.title(text["title"])
 st.subheader(text["subtitle"])
 st.markdown(text["desc"])
 st.markdown("---")
 
-# Feature Input Canvas Layout
 col1, col2 = st.columns(2)
 
 with col1:
@@ -84,20 +78,17 @@ with col2:
 
 st.markdown("---")
 
-# Pipeline Processing Execution Trigger
 if st.button(text["btn_evaluate"], use_container_width=True):
-    # Map layout input fields to numerical raw matrices
     raw_input = np.array([[daily_hours, experience_years, salary_satisfaction, promotion_gap, manager_relation]])
-
-    # Feature transform operations
     scaled_input = scaler_x.transform(raw_input)
     scaled_prediction = model.predict(scaled_input)
-    final_score = float(scaler_y.inverse_transform(scaled_prediction.reshape(-1, 1)).ravel())
-
-    # Render interactive evaluation output block
+    
+    # Target value inversion to map back to percentage scale (Error Fixed Here)
+    inverted_prediction = scaler_y.inverse_transform(scaled_prediction.reshape(-1, 1))
+    final_score = float(inverted_prediction[0][0])
+    
     st.metric(label=text["lbl_metric"], value=f"{final_score:.2f} %")
-
-    # Core classification alert dispatch logic
+    
     if final_score <= 45.0:
         st.success(text["msg_green"])
     elif 45.0 < final_score <= 75.0:
